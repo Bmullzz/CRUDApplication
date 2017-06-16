@@ -1,7 +1,16 @@
 package io.zipcoder.crudapp;
 
-/**
- * Created by brianmullin on 6/16/17.
- */
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+
+@RunWith(SpringRunner.class)
+@SpringBootTest
 public class PersonControllerTest {
+
+    @Test
+
+
+
 }

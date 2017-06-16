@@ -3,7 +3,14 @@ package io.zipcoder.crudapp.controller;
 import io.zipcoder.crudapp.person.Person;
 import io.zipcoder.crudapp.repo.PersonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by brianmullin on 6/15/17.
@@ -17,31 +24,64 @@ public class PersonController { //handles requests
     private PersonRepository personRepository;
 
     @RequestMapping(method = RequestMethod.GET)
-    public Iterable<Person> getAllPeople(){
-        return personRepository.findAll();
+    public ResponseEntity<List<Person>> getAllPeople(){
+        List<Person> people = new ArrayList<>();
+        personRepository.findAll().forEach(people::add);
+        if(people.isEmpty()){
+            return new ResponseEntity(people, HttpStatus.OK);
+        }
+        return new ResponseEntity<List<Person>>(people, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public Person getPerson(@PathVariable("id") int id){
-        return personRepository.findOne(id);
+    public ResponseEntity<?> getPerson(@PathVariable("id") int id){
+        Person person = personRepository.findOne(id);
+        if(person == null) {
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<Person>(person, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public void deletePerson(@PathVariable("id") int id){
-        personRepository.delete(id);
+    public ResponseEntity<?> deletePerson(@PathVariable("id") int id){
+        if(!personRepository.exists(id)){
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
+        }else{
+            personRepository.delete(id);
+        }
+        return new ResponseEntity<Person>(HttpStatus.NO_CONTENT);
     }
 
     @RequestMapping(method = RequestMethod.PUT)
-    public void updatePerson(@RequestBody Person person){
+    public ResponseEntity<?> updatePerson(@RequestBody Person person){
+        try{
+            if(!personRepository.exists(person.getId())) {
+                return new ResponseEntity(HttpStatus.NOT_FOUND);
+            }
+        }catch(NullPointerException npe){
+            npe.getMessage();
+        }
+
         Person p = personRepository.findOne(person.getId());
         p.setName(person.getName());
         p.setAge(person.getAge());
         personRepository.save(p);
+
+        return new ResponseEntity<Person>(person, HttpStatus.OK);
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public void placePerson(@RequestBody Person person){
+    public ResponseEntity<?> placePerson(@RequestBody Person person){
+        try {
+            if(personRepository.exists(person.getId())) {
+                return new ResponseEntity(HttpStatus.CONFLICT);
+            }
+        }catch(NullPointerException npe){
+            npe.getMessage();
+        }
         personRepository.save(person);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation();
     }
 
 
